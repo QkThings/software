@@ -1,0 +1,15 @@
+shared/
+*.so*
+*.*~
+*~
+*.a
+*.o
+*.d
+*.bin
+*.out
+*.map
+*.lst
+*.zip
+*.tar.gz
+*.rar
+.vagrant
