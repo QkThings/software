@@ -20,14 +20,81 @@
 #include "qkutils.h"
 
 #include <QDebug>
-#include <QApplication>
-#include <QStyleFactory>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonParseError>
 
 using namespace QkUtils;
+
+QkUtils::JsonParser::JsonParser(QObject *parent) :
+    QObject(parent)
+{
+    _jsonStr = "";
+    _depthLevel = 0;
+    _inString = false;
+    _escChar = false;
+}
+
+void QkUtils::JsonParser::parseData(QByteArray data)
+{
+    bool done = false;
+    char *p_data = data.data();
+    for(int i = 0; i < data.count(); i++)
+    {
+        if(*p_data == '\"')
+        {
+            if(!_inString)
+                _inString = true;
+            else
+            {
+                if(!_escChar)
+                    _inString = false;
+                else
+                    _escChar = false;
+            }
+        }
+
+        if(_inString)
+        {
+            if(*p_data == '\\')
+                _escChar = true;
+        }
+        else
+        {
+            if(*p_data == '{')
+            {
+                if(_depthLevel == 0)
+                    _jsonStr = "";
+                _depthLevel++;
+            }
+            else if(*p_data == '}')
+            {
+                _depthLevel--;
+                if(_depthLevel == 0)
+                    done = true;
+            }
+        }
+        _jsonStr += *p_data++;
+
+        if(done)
+        {
+            QJsonParseError jsonError;
+            QJsonDocument jsonDoc = QJsonDocument::fromJson(_jsonStr, &jsonError);
+            if(jsonError.error != QJsonParseError::NoError)
+            {
+                qDebug() << jsonError.errorString();
+            }
+            else
+            {
+                emit parsed(jsonDoc);
+                done = false;
+            }
+        }
+
+    }
+}
 
 QMap<QString, Target> QkUtils::supportedTargets(const QString &embPath)
 {

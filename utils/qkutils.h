@@ -20,6 +20,7 @@
 #ifndef QKUTILS_H
 #define QKUTILS_H
 
+#include <QObject>
 #include <QString>
 #include <QList>
 #include <QJsonDocument>
@@ -71,6 +72,24 @@ public:
     QString name;
     QString toolchainUrl;
     QList<Board> boards;
+};
+
+class JsonParser : public QObject
+{
+    Q_OBJECT
+public:
+    explicit JsonParser(QObject *parent =0);
+    void parseData(QByteArray data);
+
+signals:
+    void parsed(QJsonDocument);
+
+private:
+    QByteArray _jsonStr;
+    int _depthLevel;
+    bool _inString;
+    bool _escChar;
+
 };
 
 typedef QList<QkUtils::Target> TargetList;
